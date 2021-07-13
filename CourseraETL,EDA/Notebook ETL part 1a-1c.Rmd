@@ -1,0 +1,101 @@
+# Title: ETL #1
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 06  
+Author: Jessen Hobson  
+************************************************************************
+
+Many business data analysts claim that 80% of their job is extracting data from its native setting, loading it into the analysis tool that will be used, and transforming it so that it can be analyzed. These procedures are variously called ETL (extract, transform, and load), data wrangling, data munging, or just cleaning data, among others. Whether that 80% number is accurate or not, there is no doubt that getting data ready to analyze takes significant time, resources, and expertise. This video will give you some hands-on practice with ETL.
+
+Let’s use our TECA data set. As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing so that you can get the critical hands-on experience necessary to learn this valuable tool.
+
+First, open RStudio.  We have provided two files for you. The first file is a data file, called mooc1.csv. The second file is a R notebook file. It has the extension Rmd. This stands for R markdown file. It is created using RStudio. It combines two parts—1) code and 2) markdown text, or just readable text. After RStudio is open, open the .rmd file for this lesson. I have it open now.
+
+Next, let’s load the packages we are going to need. We are going load one package called Tidyverse. Tidyverse is a grouping of 8 packages. We are not using all of them today, but it is just easier for me to load one thing, Tidyverse, and have all of them ready. To load a package, we need to call the function called `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first.  You do that by going over here to the packages area, clicking install, and finding tidyverse. I won’t install it since I already have it.
+
+Before we run this code, let’s understand what we are seeing here. First, we have the markdown text that I have been reading, and that will serve as instruction for you if you go back and review this lesson. This serves as a nice header. Under that we have an R code block. This is indicated with the three carrots and the r symbol in squiggly lines. We run this code by clicking the green play button, or by clicking ctr+enter on a windows machine.
+
+I will run that now. As you can see, tidyverse is now loaded. On this machine, I have a few conflicts with one of the packages, but that will not be a problem.
+
+# Load needed packages
+```{r}
+library(tidyverse)
+```
+
+Next, let’s load the TECA dataset. This csv file is provided for you. We will call the file mooc1_s. We are using the function `read.csv()`. First, we point to the file. You can put the whole path here, or, if your working directory is already set to where this file is, you can just put in the file name and the extension. My file is in the same folder as this .rmd file, so I can just list its name here.  You can check to see what the working folder is and change the working directory by clicking on Files down at the bottom right of RStudio. Finally, I also passed the argument `stringsAsFactors=TRUE` to the function. This is not generally a good idea, but it does help with examining a data set. I will explain what this means, by explaining the different data types we are going to see in a minute. What is happening as we load the file is that R picks each column to be one data type, unless we tell it not to. So, let’s run this now. It may take a few minutes since it is a large file. 
+
+# Read in data
+```{r}
+mooc1 <- read.csv('mooc1_s.csv', stringsAsFactors=TRUE)
+```
+
+Now that we have our data loaded, let’s look at the data to get a sense what we have here. Let’s use four functions to examine the data and to see what we have. 
+The functions we will use are:
+* `str(mooc1)` – This gives us a summary of the data. This is a common function to use, but note, that you could just see this in the environment tab in RStudio, over here on the right.
+* `summary(mooc1)` – this gives us descriptive statistics of each column
+* `head(mooc1, n=10)` – this prints the first 10 rows of the dataframe
+* `tail(mooc1, n=10)` – this prints the last 10 rows of the dataframe
+
+Let’s use these four functions to understand our data better. Let’s run each of them and then we will talk about what we learn. 
+Let’s start with the `str()` function and learn a bit about the different data formats that R uses
+* `Int` – `unique_id` is an integer. This means that it is a number with no decimal points. 
+* `Number` – `customer_id` is a number. This is like an integer but might have a decimal point
+* `Character` – this is just a string or set of letters. We don’t have any of these in the dataset right now because we converted them all to `Factors` when we imported the data. 
+* `Factor` – `city` is a `factor`. When we imported the data into R, we told it to convert characters or strings to `Factors`. A factor is a set of ordered, unique categories or levels that R can do stuff with. It is convenient for viewing and understanding data. For example, we can see that there are 170 unique cities in this column. Factors, however, are not good for manipulating data, since weird things can happen when we need to modify a factor. Thus, it is generally better to keep data in the character format and convert it to a factor only when needed for analysis. 
+
+Some other types that we don’t have in here yet
+* `date`: we can convert a character or factor to a date. This is called a `POSIXct/POSIXt` object class. It is nice to do this because we can then perform operations on the dates, such as extracting the month of the year. Thus, later will convert `unformatted_date` to the date format.
+* `NA` is not a data type, but a stand-in when data is not available. It means “not applicable” and indicates an entry should be available but is not. Thus, the object should be there. If we look at the output from the `summary()` function we can see that `customer_id` has over 700,000 NAs
+* `NULL` is similar to NA but indicates that the value does not exist or is not measurable. Thus, the entry should not be there. We don’t have any of these in the data right now.
+
+Now, we will go through column by column to examine what we have
+* `Unique_id` is an integer, unique identifier for each row that has no duplicates and no nulls.
+* `Transaction_id` seems to be an identifier for transactions. There are duplicates since there are less factors than the numbers of rows and no nulls and because `summary()` shows that some `transaction_id`s are repeated 3 and 4 times. This means that some transactions must have more than one product purchased.
+* `unformatted_date` is clearly dates that are not formatted as a date. We will need to change that.
+* `customer_id` has a lot of missing values, but still lists thousands of customers. These are loyalty costumers using their loyalty card/number when they make a purchase. 
+* `product_id` & `product_name` show that there are over 10,000 different products that are sold. The most frequently purchased is “G87E10S”. We can tell this is fuel by looking at the `head()` function. The next most common product sold is a large fountain drink.
+* `category_id` & `category_name` represent 227 different categories of products. The most commonly purchased are “Fuel Premium” and “Cold Ben-retail (311)”
+* `parent_id` & `parent_name` represent 86 parent categories for the product. The most common, as we might suspect by now, is “Fuel” and “Cold Dispensed Beverage.”
+* `product_count`. It is not clear what this means, but it could be the number of different products for each parent category.
+* `site_id`, `site_name`, and `address` represent 189 different stores. The store with the most transactions is “561 Gradendale” located at 890 odum road. 
+* `city`: the stores are spread across 170 different cities. The city with the most purchases in our dataset is Columbia.
+* `zip` is the zip code for the store. It is curious that we don’t have the state. It would be nice to obtain that data.
+* `latitude` & `longitude`: these are the coordinates to map each of the stores
+* `site_status` has two levels "ACTIVE" and "CLOSED". We can’t really tell what this means at this point. 
+* `revenue` is a very useful number. It shows how much revenue is earned for each product. There are no missing values here but some negative values. Examining the `head()` and `tail()` functions does not reveal much about any negative amounts. Let’s employ another useful function to explore what products might result in negative revenue. Let’s use the function `slice_sample()` down at the end of the notebook here. This will display a sample of the data for the number of rows we specify. Let’s look at a sample of 100. You may have to rerun this to get a different sample, but eventually you will see that lottery payouts, cigarette discounts, and store discounts seem to be the primary reason for negative revenue. 
+
+* `costs` appears to be the cost of the product that was sold. 
+* `gross_profit` then must be the financial concept of the profit remaining for the company after direct costs are subtracted. Thus, gross profit is just revenue minus costs.
+`gp_margin` must then be gross profit margin. This is another financial concept calculated as revenue minus costs, which equals gross_profit, divided by revenue. Gross profit margin represents the percentage of profit for each dollar of revenue. It is an important metric for measuring the profitability of the overall business and individual product categories. We will use these measures a lot in the class.
+
+Note that `gross_profit` and `costs` and `gp_marign` have several thousand NAs . Using `slice_sample()` repeatedly or other methods, we can see that these are for abnormal and fairly rare transactions like prepaid fuel, money orders, coupons, etc. 
+
+* `units` appears to list how many units of that product were sold. Since the median is 1 and the mean is higher, it is likely that most products sold are 1 unit, but that a few products have significantly more than one unit. Just looking at the `head()` of `tail()` functions seems to verify this since we see that fuel has over multiple units every time, which would be gallons of fuel, while soda and other items are mainly 1 unit. Additionally, there are a few missing values for units. While the head and tail functions don’t provide any examples, using `slice_sample()` shows that prepaid fuel and “pop deposits” appear to be the reason why. This likely means the customer is returning a glass pop/soda bottle and receiving a refund.
+
+# Look at the data first and understand what we have - `str()` function
+```{r}
+str(mooc1)
+```
+
+# Look at the data first and understand what we have - `summary()` function
+```{r}
+summary(mooc1)
+```
+
+# Look at the data first and understand what we have - `head()` function
+```{r}
+head(mooc1, n=10)
+```
+
+# Look at the data first and understand what we have - `tail()` function
+```{r}
+tail(mooc1, n=10)
+```
+
+# Explore negative revenue
+```{r}
+slice_sample(mooc1, n=100)
+```
