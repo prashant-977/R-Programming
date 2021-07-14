@@ -1,0 +1,84 @@
+# Title: ETL #3
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 08  
+Author: Jessen Hobson  
+************************************************************************
+
+Let’s continue to practice some key techniques for ETL using RStudio.
+As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool.
+We are using the TECA data set. 
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open.
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+Next, open the .rds file. An rds file is an R data file. This is just the file from the last video saved in rds format. Saving it in rds format is useful because it uses less room on your hard drive and maintains all of the column formats. Let’s call this file `mooc1` by writing mooc1 followed by the assignment symbol which we can create by clicking alt+dash on a windows machine. This is followed by the `read_rds()` function and the name of the file. Again, you will need to know where this file is located in order to load it. Since mine is in my working directory or working folder, I can just use its name to load it. Alternatively, I could change my working directory over in the files area of RStudio or put the full path here. 
+
+# Read in data
+```{r}
+library(tidyverse)
+mooc1 <- read_rds('mooc1_etl3.rds')
+```
+
+When tidying your data, it’s important to make sure there are very few mistakes, outliers and missing data.  Let’s focus on a variable, revenue, since revenue is critical to any business and check for and deal with these issues.First, let’s make sure that revenue has no missing values. We can check that with the `summary()` function. 
+
+# Look for missing data in revenue
+```{r}
+summary(mooc1$revenue)
+```
+
+There are no missing values, so let’s check for any mistakes. One type of mistake would be if there are non-numbers in this column, since we would expect revenue to be a number. We can check this with the `str()` function or by looking in the Environment window in RStudio. Luckily, everything is a number here.
+
+Next, let’s see if there are any really high or low values, any outliers. First, let’s check for extreme values using the `summary()` function. So, let’s look back up at the `summary()` function results. 
+
+This does show some potential problems. First, there are some negative amounts. That seems strange for revenue. However, we previously learned that lottery payouts and cigarette discounts seem to be the primary reason for negative revenue. That makes sense and does not seem like a mistake.
+
+However, a second problem is that there seems to be some really high revenue numbers. First, the mean is much higher than the median. This indicates that there are a relatively few observations that are really high. Second, the maximum revenue measure is really high. It seems pretty unlikely that any individual product, even if many of them are bought, is going to give revenue of 4,500,000!
+
+# Look for missing values in revenue
+```{r}
+str(mooc1$revenue)
+```
+
+So, we need to investigate if these high amounts are errors. Again, there are many ways to do this, but one way is just to sort the dataset on revenue with the highest revenue coming first. So, there are really three things we need to do. 
+
+First, we need to tell R which dataframe we are working with. Second, we need to tell R to sort this dataframe with the highest revenue coming first. Third, we want to just look at the first 25 rows.
+
+While we could do this all in one statement with a bunch of parentheses, let’s start using the package tidyverse to make things a little easier.  Tidyverse is a grouping of 8 packages. It is really useful for use with dataframes. Here we are going to utilize a useful thing called the pipe symbol. This symbol, `%>%`, allows us to attach different tasks together like a train or a chain, instead of putting it all into one statement.
+
+So, first, we say which DF we are working on. Next, we use the `arrange()` function with the `desc()` function nested in there to get descending order. Finally, we run the `head()` function with n=25. We could have done this all as one statement without using the `%>%` symbol, but that is sometimes more confusing.
+
+Looking at these high-revenue products, these first few rows, shows us that there is clearly a problem with product number `17628`, which is the product called `OK LUCKY RED 7S 46`. Looking at the category name and the parent name we see that these are a particular type of scratch-off lottery ticket. These products make up all of the 25 highest revenue products and the revenue does not match up with the profit or the costs. So, clearly there has been a mistake made. 
+
+# Look at the highest revenue items
+```{r}
+mooc1 %>%  arrange(desc(revenue)) %>% head(n=25)
+```
+
+So, next, we need to check if all of these particular products have bad revenue. Let’s create a new dataframe so we can easily see all of them. Let’s name this dataframe “outliers.”
+
+First, we name the new dataframe. Next, we enter the definition symbol. We can do this on a windows machine by just clicking alt and dash. Next, we tell R to use mooc1 to create this DF. Mooc1 is the dataframe that we are taking the new dataframe from. After that, we use the handy function called `filter()`. Filter is a really useful function from Tidyverse. Filter will select only the rows of the data frame that we specify. Let’s pick `product_id = 17628`, which, of course, is the product id that belongs to "7628 OK LUCKY RED 7S 46". Notice that we need to use two equals signs to do this. This tells R that we want `product_id` to equal 17628 and not to be assigned that number. That is all we need to do to create this dataframe.
+
+Next, we can open our dataframe by clicking on it in the environment tab. Sure enough, as we scroll down, we can see that each of these products has a ridiculously large revenue amount. They are also all round numbers will all zeros. Furthermore, they don’t match up at all with the costs, the gross profit, the units, or the pross profit margin.
+
+# Create a new dataframe to look at all "7628 OK LUCKY RED 7S 46"
+```{r}
+outliers <- mooc1 %>% filter(product_id == 17628) 
+```
+
+So, finally, we will need to eliminate these outliers since it is unclear what mistake was made here and these revenue amounts do not represent reality. There are several ways to do this, but for our purposes, let’s just delete all of these rows. We can use filter again to do this. First, let’s call the dataframe something new, since we are eliminating some data. This is just good practice in case we make a mistake. Second, use the filter function, just the way we did before, but this time with the not equal operator. `!=`.
+
+# Create a new dataframe to delete "7628, OK LUCKY RED 7S 46"
+```{r}
+mooc1_clean <- mooc1 %>% filter(product_id != 17628)
+```
+
+Finally, let’s check the distribution of the revenue columns now using the `summary()` function again. This seems much more reasonable. If we were to examine the highest revenue now, we would see that the highest amounts are purchases of hundreds of gallons of diesel fuel and hundreds of lottery tickets, which makes sense.
+
+# Look at the distribution of revenue
+```{r}
+summary(mooc1_clean$revenue)
+```
+
