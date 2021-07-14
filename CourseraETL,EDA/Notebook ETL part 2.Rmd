@@ -1,0 +1,93 @@
+# Title: ETL #2
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 07  
+Author: Jessen Hobson  
+************************************************************************
+
+Many consider cleaning and exploring data to be the most time-consuming part of a data analyst’s job. Let’s continue to practice some key techniques for ETL using RStudio.
+
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open. We are using the TECA data set. 
+As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool.
+
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+# Load needed packages
+```{r}
+library(tidyverse)
+```
+
+Next, open the .rds file. An rds file is an R data file. This is just the file from the last video saved in rds format. Saving it in rds format is useful because it uses less room on your hard drive and maintains all of the column formats. Let’s call this file `mooc1` by writing mooc1 followed by the assignment symbol which we can create by clicking alt+dash on a windows machine. This is followed by the `read_rds()` function and the name of the file. Again, you will need to know where this file is located in order to load it. Since mine is in my working directory or working folder, I can just use its name to load it. Alternatively, I could change my working directory over in the files area of RStudio or put the full path here. 
+
+# Read in data
+```{r}
+mooc1 <- read_rds('mooc1_etl2.rds')
+```
+
+In the prior video we examined each column of our dataset called “mooc1”. In this video, we will clean or tidy that dataset. There are multiple ways that a dataset can be messy, including but not limited to the following:
+* Column headers that don’t have names
+* Multiple variables stored in one column
+* Variables stored in rows and columns
+* Outliers, which are extreme values—either vary large or vary small
+* Mistakes
+* Columns that have the wrong format or data type
+* Missing values
+* Missing columns – or the need to join or merge additional data into the current data set
+
+Relatively speaking, our data is quite tidy. For example, each row is already one observation and each column is already one variable. However, there are a few things that we can tidy up.
+
+Let’s start with fixing column data formats. In particular, we want to turn the `unformatted_date` column into a date object class or `POSIXct/POSIXt` object class so that we can perform operations on it.
+* As with almost everything in R, there are multiple ways to create a date object. This is true because it is an open-source software and anyone can create a package to make it easier to do something in R. Let’s use the tools from the package `lubridate`. Thus, first, load the `lubridate` package.
+* We use the library function to load the package.
+* If you don’t have the package, you will need to go to the packages area and download it. 
+
+# Load the package lubridate to make this easy
+```{r}
+library(lubridate)
+```
+
+The first step in changing `unformatted_date` to a date object is to see what format the date is in. We can do this very easily using looking at the “Environment” tab or the `str()` function. To look at just one column from a dataframe, we can put the name of the dataframe first, followed by a dollar sign, followed by the name of the column. Let’s use both of these functions to examine this column. We can place them both in the same code block and run them both.
+
+While this is not the prettiest output, these two functions show that `unformatted_date` has the four-digit year followed by a dash, the two digit month followed by a dash, and then the two digit day. 
+
+# Examine the `unformatted_date` column
+```{r}
+str(mooc1$unformatted_date)
+head(mooc1$unformatted_date, n=100)
+```
+
+Lubridate allows you to easily convert the date once you know the text layout, using the correct function that matches that text layout. In this case, the correct function is `ymd()`—which you might guess stands for year, month, and day. Other examples would be `mdy()` for month-day-year, `dmy()` day-month-year, etc. Using this function, create a new column called date using the “$” symbol. Looking in the environment window you can see that this new column has been created. You will also notice that it has the format Date.
+
+# Create a formatted date column using lubridate
+```{r}
+mooc1$date <- ymd(mooc1$unformatted_date)
+```
+
+Next, lets create two more columns, a year and a month column. Once we have created the formatted date column, we can easily create these. To create a column for the year, just use the `year()` function. Looking at the Environment tab, we can see that year has been created and is a number.
+
+# Create year column
+```{r}
+mooc1$year <- year(mooc1$date)
+```
+
+Next, create the month column. This is done the same way with the exception that we have the option to see the labels of the months—like jan, feb, march---instead of the numbers so, take that option with label=TRUE. 
+
+# Create month column
+```{r}
+mooc1$month <- month(mooc1$date, label=TRUE)
+```
+
+Finally, let’s look at the data to make sure these new columns worked. It is always a good idea to look at your data after manipulating it, to make sure your code did what you thought it was going to do. Run the `slice_sample()` function to do this. Your output will be different than mine, since `slice_sample()` takes a random sample of the data, but nevertheless, you can scroll across the data and see that the new date column, year column, and month column all appear to have worked correctly. 
+
+# Check the columns to make sure this worked
+```{r}
+slice_sample(mooc1, n=10)
+```
+
+
+
+
+
