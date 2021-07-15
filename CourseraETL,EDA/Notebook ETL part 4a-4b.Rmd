@@ -1,0 +1,158 @@
+# Title: ETL #4
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 09  
+Author: Jessen Hobson  
+************************************************************************
+
+Let’s continue to practice some key techniques for ETL using RStudio. As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool.
+
+We are using the TECA data set. There are three files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. There is also a CSV file. 
+
+First, open the .rmd file. I already have it open.Next, let’s load the packages we are going to need. We are going load the package Tidyverse. Next, open the .rds file. Additionally, let’s open a CSV file we will use later. Let’s use the `read.csv()` function to do this. As we open this CSV file, let’s make sure the argument `stringsAsFactors=FALSE` so that character/string variables are imported as character variables and not as factors.
+
+# Bring in needed libraries and data
+```{r}
+library(tidyverse)
+mooc1 <- read_rds('mooc1_etl4.rds')
+mooc1_states <- read.csv('mooc1_states.csv', stringsAsFactors = FALSE)
+```
+
+Another really important task in ETL is to merge or join data together. For some reason, we have no states in our dataset. We have cities and zip codes but not states. It would be nice to add that data. Luckily, we have created a state database that you can use that has all of the zip codes listed in this dataset, along with the states. Let’s open this dataset and join it to our other dataframe. 
+
+Let’s use the functions `str()`, `summary()`, `head()`, and `tail()` to examine this new dataframe. We notice a few things here.
+
+* `postal_code`: the first column appears to be zip codes. There are two problems here. First, this column is called `postal_code` and not `zip`. We don’t have a `postal_code` column in our mooc1 dataframe, but instead we have a column called `zip`. This is a problem because in order to join our two databases together and get states into our dataframe, we need one column to link the databases—that is, one column that is the same between both tables. The only thing the two tables have in common is zip code. It looks like these two columns represent the same thing, zip codes, but we need to account for this different name. Second, this column is in a different format from the zip column. The column in the states dataframe is a character variable and zip is an integer. So, we need to figure that out.
+* `state_province` -this is the column we want to put into our mooc1 dataframe.
+* `state_provice_code` – this seems to be redundant with `state_province`, so, we could bring it in, but we don’t really have to.
+* `country_name` – this column is useless since all of the states are from the US. We can see this if we turn it into a factor, using the `str()` function or looking at the Environment tab, but we won’t do that here.
+
+# Examine the states dataframe
+```{r}
+str(mooc1_states)
+summary(mooc1_states)
+head(mooc1_states, n=10)
+tail(mooc1_states, n=10)
+```
+
+So, our first step is to put the postal code column into the same format as the zip column, which is `integer`. We can also put it into `number` which will work as well. To do this we will use the `as.interger()` function. First, we tell R which column we are going to create. Then, we apply the function to that column. To be safe, let’s do this to a new column called `postal_code2`.
+
+# Change the postal_code column data type
+```{r}
+mooc1_states$postal_code2 <- as.integer(mooc1_states$postal_code)
+```
+
+But wait, we get a warning message that NAs are introduced. Let’s us the `summary()` function to look at the three columns—`postal_code`, `postal_code2`, and `zip`. We see that, indeed, over 300 NAs are created. What is going on? If we scroll back up to our original view of the `mooc1_states` dataframe using the tail function, we see that the reason R made the column a character type in the first place is that some zip codes include a dash and 4 extra numbers. R must not have defined the dash and extra numbers as the number format, but rather the character format. If we look at `mooc1` using `summary()` we don’t see those in `zip`. In fact, all numbers are only five digits. These extra four numbers are called “+four codes” and are used to make zip codes even more specific. We do not need these and `mooc1` does not have them.
+
+# Look at the three columns to see why NAs were introduced
+```{r}
+summary(mooc1_states$postal_code)
+summary(mooc1_states$postal_code2)
+summary(mooc1$zip)
+```
+
+So, it looks like we are going to need to take off the dash and the extra numbers. Let’s do that with the `str_sub()` function. This function will take the characters from a column and subset that string to the characters we want. Since we only want the first through the fifth numbers we pass `1, 5`. Run the `tail()` function and compare `postal_code` and `postal_code2` to see that this worked. Sure enough, if looks like it did and we can move on.
+
+# Split postal code column in the state dataframe
+```{r}
+mooc1_states$postal_code2 <- mooc1_states$postal_code %>% str_sub(1,5)
+tail(mooc1_states, n=10)
+```
+
+Now that we have the only five numbers in postal code 2, we can retry the `as.integer()` function. After doing that, let’s run the `summary()` function and make sure things worked. Ok. That worked. Now, both `zip` and `postal_code2` are in the integer format.
+
+# Try to convert postal code again
+```{r}
+mooc1_states$postal_code2 <- as.integer(mooc1_states$postal_code2)
+summary(mooc1_states)
+```
+
+Next, Let’s change the name of the `postal_code2` column to `zip`. We could deal with these having a different name through the `join()` function itself that we will do next, but it will be good practice to do it this way. This is done quite easily with the `rename()` function from Tidyverse. First, we define a new dataframe. It is probably safe to use the old dataframe name here, since this doesn’t mess with the data in any way. Next, we tell R which dataframe we are manipulating. Then we use the `rename()` function with the new name first. Go ahead and look in the Environment tab to make sure this worked.
+
+# Rename the postal_code2 column to match mooc1$zip
+```{r}
+mooc1_states <- mooc1_states %>% rename(zip = postal_code2)
+```
+
+Now, let’s clean up the dataframe before we merge it. First, let’s drop `postal_code` and `country_name` since we don’t need them. To do this, let’s introduce another really useful function from Tidyverse, the `select()` function. This function selects which columns we want and don’t want for a new dataframe. First, give a name to the new dataframe. We can use `mooc1_states` and rewrite it. Then, tell R which dataframe to manipulate, in this case, `mooc1_states`, of course. Then, use the `select()` function. You can then enter the columns to delete with the “-" symbol in front. Check the environment tab to make sure it worked. 
+
+# Drop and reorder columns
+```{r}
+mooc1_states <- mooc1_states %>% select(-postal_code, -country_name)
+```
+
+Now, let’s use the `select()` function to reorder the columns and drop `state_province_code`. First, just put them in the order you want inside the `select()` function. Then, just omit the ones you don’t want. Thus, we drop `state_province_code` just by not mentioning it in the `select()` function. Check it in the Environment tab. You might notice that we could have done both of the steps in one go by using `select()`, but I thought it would be helpful to separate the steps. 
+
+## Reorder the remaining columns
+```{r}
+mooc1_states <- mooc1_states %>% select(zip, state_province)
+```
+
+Finally, we get to merge our two data frames. Merging or joining (I will use these both interchangeably) is really tricky business. It is really important to think about what you want before merging, and then to make sure you get what you want after merging. One key way to do this is to 1) know the level of aggregation in your data frames and 2) check the number of rows of your dataframes before and after you merge, to make sure you did what you thought you did. 
+
+What does “level of aggregation” mean? By this I just mean what each row of your data represents. For example, each row of `mooc1` represents one or more of the same product from one transaction. Thus, the level of aggregation is “product-transaction”. On the other hand, each row in `mooc1_states` is a unique zip code. So, the level of aggregation is zip code. 
+
+Once we know the level of aggregation of our two dataframes, we can ask the critical question: What level of aggregation do we want when we merge these dataframes? We want to just add state names to rows that already exist in `mooc1`. So, our final dataframe should have exactly the number of rows that `mooc1` has right now, which is 1,049,961. Keep that in mind. 
+
+So, that does not sound so difficult, what can go wrong? Well, a lot, but let’s focus on these potential problems.
+* First, maybe `mooc1_states` has duplicate zip codes. If this is true, then we might get duplicates in `mooc1`. We could check this with `n_distinct()`, but I already have and all zip codes are unique. 
+* The next problem is that we use the wrong join method. There are multiple ways to join things and using the wrong method will cause problems
+* Using the wrong method could add rows that we don’t want, because they are in the state dataframe but not in the `mooc1` dataframe. Alternatively, using the wrong method could take away rows from the `mooc1` dataframe because they are not in the state dataframe. Remember, we want to keep everything in the `mooc1` dataframe and add just states from the state dataframe. 
+
+Here is the documentation from the package dplyr. These are for mutating joins, which means joins that add new columns (https://dplyr.tidyverse.org/reference/mutate-joins.html). The mutating joins add columns from the second dataframeto the first dataframe, matching rows based on the keys supplied in the function. If a row in the first dataframe matches multiple rows in the second dataframe, all the rows in the second dataframe will be returned once for each matching row in the first dataframe.  Here are the types:
+
+* inner_join(): includes all rows in the first dataframe and the second dataframe.
+* left_join(): includes all rows in the first dataframe.
+* right_join(): includes all rows in the second dataframe.
+* full_join(): includes all rows in the first dataframe or the second dataframe
+
+So, which one of these methods do we want? Well, let’s use the wrong one first, just to illustrate why it is important to use the correct join method. Let’s use the `full_join()`, which keeps everything from both dataframes, whether the rows march up or not. First, let’s check the size of `mooc1` before and then after using `dim()` This is how many rows we want to have when we are done. 
+
+# First, check the size of the dataframe
+```{r}
+dim(mooc1)
+```
+
+We want to add one column to this table, since we are adding state_province. We do not add zip because we are using zip to merge with mooc1 and so the two zip columns will just become one column. Call the new dataframe `mooc1_etl`. We use the `full_join()` function. This function has as arguments the original dataframe and the new dataframe and which column we are using to join on. Look at the Environment tab. We can see there that the columns we want from `state_province` are now in `mooc1`. 
+
+# Join the tables together using `full_join` (wrong way for our case)
+```{r}
+mooc1_etl <- full_join(mooc1, mooc1_states, by='zip')
+```
+
+Next, use the `dim()` function to check the number of rows of the new table. Unfortunately, we have too many rows. What does this mean and why did this happen? Well, `full_join()` keeps all rows in both tables, even if they don’t match and there must have been some states in the states table that were not in the mooc1 table. This is a problem and we do not want these extra rows.
+
+# Check to make sure the original table is the right size
+```{r}
+dim(mooc1_etl3)
+```
+
+Run the `summary()` function on `unique_id`. Sure enough, when we look at the summary of `unique_id` we see over 200 NAs. This happens because we are adding `state_provinces` that have no information in the `mooc1` table. That means there were over 200 zip codes in mooc1_states that were not in mooc1_clean.
+
+# Look at the unique_id column to see if we have NAs
+```{r}
+summary(mooc1_etl$unique_id)
+```
+
+So, now let’s do this correctly. What join type do we actually want? We want the `left_join()` method. This includes all rows from the first dataframe and ONLY those rows from the second dataframe. Then, let’s run the `dim()` function and the `summary()` function to make sure we get the right number of columns and rows and to make sure we have no NAs in `unique_id`. Sure enough, when we do this, we get the same number of rows before and after, one additional column after, and no NAs.
+
+# Use `left_join()` (the correct way for our case)
+```{r}
+mooc1_etl <- left_join(mooc1, mooc1_states, by='zip')
+dim(mooc1_etl)
+summary(mooc1_etl$unique_id)
+```
+
+Finally, let’s export this table. We can export the dataframe as an ‘rds’ file that is native to R. Again, this is good practice for several reasons. First, while we could continue to import the file from the csv version every time, this takes longer than an rds file. Second, by exporting the file midway through analysis, we can always come back and read in that file and not have to go back and redo all of the manipulation that we already did. This is not hard to do, but it does waste time. Finally, saving to rds rather than csv preserves the format of the columns. For example, the date column will be correctly formatted as the `Date` format, and we won’t have to go back and fix that again. I also compressed the file, as you can see here. 
+
+These videos on ETL have taught many of the key skills needed load, transform and manipulate data. 
+They will serve you well in solving business problems with data.
+
+# Export mooc1_etl for use later while retaining the column formats
+```{r}
+write_rds(mooc1_etl, 'mooc1_etl_done.rds', compress = 'gz')
+```
+
