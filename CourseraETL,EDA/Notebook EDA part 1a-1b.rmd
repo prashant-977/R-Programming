@@ -1,0 +1,104 @@
+# Title: EDA #1
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 10  
+Author: Jessen Hobson  
+************************************************************************
+
+In this video we are going to focus on viewing, understanding, and exploring data.
+As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool.
+
+The data we are using is based on the TECA convenience store data. This data is a sample of transactions from several different convenience stores in the U.S. from 2017-2019. 
+We have done some additional cleaning to make the data easier to use for this class. 
+
+Viewing, understanding, and exploring data is sometimes called EDA—exploratory data analysis. The point of examining data, and having data in the first place, is to gain business insights from the data. Thus, after we have extracted and cleaned our data, it is time to start exploring it. 
+
+However, please note that the process of first cleaning the data and then exploring it is not a linear, sequential step process. Rather, cleaning and exploring is almost always iterative. That is, for example, we will get the data clean, start to explore it, and then notice that we need to do some more cleaning. We will go back and do that cleaning and move toward understanding the data more, maybe go back and clean some more, and etc.
+
+We have data for at least two broad reasons. 
+* We have some specific questions to ask the data.
+* We have new data and we are not sure what it can tell us.
+The approach we will take today is to focus on the second reason: We need a better understanding of the data and what it tells us. 
+
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open.
+
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+# Bring in needed libraries
+```{r}
+library(tidyverse)
+```
+
+Next, let’s open our main data set, `mooc1_eda`. Let’s call this `df1` so that I have to type `mooc1_eda` so often.
+
+# Read in needed data
+```{r}
+df1 <- read_rds('mooc1_eda.rds')
+```
+
+Next, let’s use the `str()` function and the `summary()` function to look at this data. 
+
+Let’s pause here to define some terms that are often used to describe data. R classifies and stores data in different formats—such as numeric, character, factors, etc., but today let’s introduce some other terms that are commonly used outside of R to describe data formats and see what they mean. Now that the data is loaded, let’s define 1) continuous variables and 2) categorical variables. 
+
+Let’s look first and the revenue column. This column lists the revenue for the sale of the product in that row. R stores this in the number format. Another name for this type of variable is continuous. Revenue is in dollars and each increment in revenue represents a higher or lower amount. That is, each amount, like 10.57, has meaning and the difference between two entries, for example 10 and 12 has meaning. For example, 12 dollars is 2 dollars more than 10 dollars. 
+
+On the other hand, there is another category of variable for which in-between measurements between two categories are not meaningful. These variables are thus just categories and we often call them categorical variables or discrete variables. If there are just two categories, like yes or no or true or false, we call them dichotomous. `site_name` is a good example of a categorical variable. `Burlington` and `Waterloo`, for example, are categories that have no order. They are discrete because the difference between the two means nothing. That is, half a `Burlington` doesn’t mean anything in this context. R stores this variable as a character.
+
+Now, let’s make one more important point. What type of variable is `site_id`? Is it continuous or discrete? This might be a bit confusing because this is clearly a number, and R stores it as a number. But this is clearly a categorical variable. The numbers here are just arbitrary numbers that represent the site names and no more. Thus, even though they are numbers, the difference between two `site_id`s is not meaningful. Thus, R could just as appropriately classify `site_id` as Characters or Factors in R.
+
+# Look at the data
+```{r}
+str(df1)
+summary(df1)
+```
+
+Now that that is out of the way, let’s learn a really important skill in R for exploring and understanding our data. This skill is plotting with the `ggplot()` function. It is often said that a picture is worth a thousand words. Pictures, plots, and graphs help us quickly and efficiently assess a large amount of information. Certainly, much more quickly than when we are just looking at a table of text. Like everything else in R, there are many ways to draw plots/graphs. We will use the tidyverse universe of functions, to which `ggplot()` belongs, because it is relatively easy to use. 
+
+So, what do we want to do first to understand our data? Which of our variables/columns/features are most important? Well, we are in business to make money, so let’s look at `revenue`. One thing we might be interested in is to know how much revenue we make for each purchase. How much do we make on each product? What is the general distribution of revenue for the products we sell? To see this, let’s look at a histogram of revenue. This is a common graph for one continuous variable, like revenue. It will display revenue on the x axis and count the number of transactions in each bin on the y axis. 
+
+Now, how do we do this in R? We are going to use ggplot, a method of graphing from the tidyverse package. Ggplot has a lot of parts to it, which can seem complicated when you are looking at big chunk of code, but ggplot is nice because you make a graph like making a multilayer cake—adding layer to layer. Thus, GGplot is only as complicated as each layer.
+
+Ggplot, at its most basic, has just two layers. The first layer is the ggplot function, which includes the ggpot function’s aesthetics. Aesthetics is a dumb name, but I don’t really like most of the tidyverse names, so we will just have to deal with it. However, it is not hard. Let’s build this first layer. First we call the `ggplot()` function. We put the reference to the data in there and then we add the aesthetics. Since we are just looking at revenue on the x axis, the only thing we need to put in the aesthetics, `aes()`, is `x=revenue`. That is layer 1.
+
+Next, we add the second layer. This is the layer that tells R what graph to plot. We are going to plot a histogram so we add that function. We can add more than one plot layer if we want. These plots layers can get complicated and have their own aesthetics, but we won’t get into that two much. Let’s run this first graph. 
+
+# Ggplot of Overall revenue - Continuous variable, Histogram plot
+```{r}
+ggplot(df1, aes(x=revenue)) + 
+  geom_histogram()
+```
+
+What do we notice from this plot? Remember what we are looking at. The x axis is the amount of revenue we make from each product sold. The y axis is the number of those transactions. It is easy to see that most of our transactions generate just a little bit of revenue. This makes sense given that these are convenience stores. However, we can’t tell much more than that. In particular, it would be nice to see things at more detail, we feel a bit zoomed out here. Luckily, the nice layer structure of ggplot allows us to zoom in, simply by adding another layer. 
+
+So, next let’s add a new layer that zooms us in. This can be done by just using the plus sign again, and then adding a layer to change the x and y coordinates. This is called `coord_cartesian()`. Let’s change the x coordinates to -300 to 300 and the y coordinates from 0 to 5000.
+
+## Add a third layer for coordinates
+```{r}
+ggplot(df1, aes(x=revenue)) + 
+  geom_histogram() +
+  coord_cartesian(xlim = c(-300, 300), ylim = c(0, 5000))
+```
+
+After adding the coordinates, we learn a bit more, but still don’t have the detail we would like. It would be nice to make the plot more specific by decreasing the size of the bins. In fact, we can see that RStudio has been warning us about this each time, “`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.” We don’t have to add another layer for this, but we can change the `binwidth` in the `geom_histogram` layer.  Let’s pick bin width of $0.25. Let’s narrow down the coordinates a bit more. 
+
+Now we see a really interesting picture. We have a bimodal distribution—meaning there are two humps--where there are a lot of rather small transactions, from about $0 to $10 or $15. This makes sense if these are the typical small convenience store purchases. Then, we see a bunch of transactions centered at about 30 dollars. This makes sense if they are fuel purchases.
+
+## Fix bins
+```{r}
+ggplot(df1, aes(x=revenue)) + 
+  geom_histogram(binwidth = .25) +
+  coord_cartesian(xlim = c(-100, 100), ylim = c(0, 5000))
+```
+
+Finally, let’s add one more layer to add a title. We do this with the `labs()` function. I will also zoom in a bit more. 
+
+## Add title
+```{r}
+ggplot(df1, aes(x=revenue)) + 
+  geom_histogram(binwidth = .25) +
+  coord_cartesian(xlim = c(-50, 50), ylim = c(0, 5000)) +
+  labs(title = 'Histogram of Revenue')
+```
