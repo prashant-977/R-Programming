@@ -1,0 +1,97 @@
+# Title: EDA #3
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 12  
+Author: Jessen Hobson  
+************************************************************************
+
+In this video we will learn some techniques for viewing, understanding, and exploring data. As always, we encourage you to follow along. Do each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool. 
+
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open.
+
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+Next, let’s load our data. The data we are using is based on the TECA convenience store data. This data is a sample of transactions from several different convenience stores in the U.S. from 2017-2019. We will load the `mooc1_eda.rds` data and call it ‘df1’.
+
+# Bring in needed libraries and read in data
+```{r}
+library(tidyverse)
+df1 <- read_rds('mooc1_eda.rds')
+```
+
+The next technique we will learn is how to group data together and summarize the data. For example, one thing we might want to know about this industry and all of TECA’s stores is in which months of the year they make the most money. We could do this with the box plot or the violin plot that shows overall means and sums. Those plots are great because they show us each point in the data. However, sometimes it is easier to visualize data when we summarize it before we visualize it. So, let’s introduce this next, really important tool for exploring data—grouping and summarizing data. There are many ways to do every task in R, and transforming data is no exception. We will pick one way of grouping and summarizing data--the tidyverse package called dplyr (dee ply R) —because it is an intuitive and widely used approach by modelers and researchers.
+
+Let’s examine total revenue by month. This will tell us which months of the year are best for TECA’s stores and will help us understand the industry even better. What is your guess? Which months will have the most revenue. 
+
+To group by month, we are going to transform the data. How do we want the data to look? This is key question you should always ask yourself before you transform your data. We want to see the sum of revenue by month. Thus, we will have two columns once our data is transformed—month and sum of revenue. We will have 12 rows, one for each month.
+
+How do we do this in dplyr? As mentioned, this is really quite easy. It is done in two parts—the first part is the grouping by month and the second part is the summarizing of revenue. Dplyr has neat functions for each of these steps. Let’s create a new dataframe called `month`. This new dataframe will take `df1` and run the` group_by()` function. I am using the pipe operator, `%>%`, to chain these two together. The first part is the `group_by` function. All we need to pass to this function is the column we are going to group by, which is `month`. 
+
+Next, we do the summarizing part. We just add the `summarize()` function with another pipe. In this function we pass the name of a new column and what that column will be. In our case, we are summing `revenue`. This is done with the sum function—so `sum(revenue)`. 
+
+Let’s run this code and then look at the new dataframe. There are two ways to view the dataframe. Since it is small, we can just print it in the notebook, which is what I did here, or we can click on it in the Environment tab to view it. It looks exactly as it should. Close inspection will show that the later part of the year seems to generate the most revenue. 
+
+# `group_by` and `summarize` by month
+```{r}
+month <- df1 %>% group_by(month) %>% summarize(sum_revenue = sum(revenue))
+print(month)
+```
+
+However, although we can view this much simplified table pretty easily, especially compared to the nearly 1 million row `df1` table, it will still be easier to visualize this with a plot. Let’s use a bar chart for revenue by year. There are two layers to this `ggplot()` graph. The first is `ggplot` with its aesthetics. In this case, `x=month` and `y=sum_revenue`. The second layer just calls the particular graph we want to use, which is this case is `geom_col()`. 
+
+What do we learn? We see that late winter and spring months made the least amount of revenue. On the other hand, late summer and early winter are the best. This is much easier to see from the graph than from the table. Even though the table is quite simple. 
+
+# Plot the new grouped dataframe using a bar plot
+```{r}
+ggplot(month, aes(x=month, y=sum_revenue)) + 
+  geom_col()
+```
+
+Let’s add some more layers to this plot to make it more attractive. Let’s plot it with color and two additional layers. We add the color in the aesthetics of the `geom_col()` function in this case. Next, we would like to add some additional grid lines and labels to the y axis. This is done, relatively easily using the layer `scale_y_continuous()`. Now, don’t worry about memorizing all of this. Simple internet searches will give you plenty of examples of different things to try with Ggplot. The `breaks` argument in this function allows us to set 0 as the start, 700,000 as the end, and 100,000 as the intermediate, labeled gridlines. Finally, we add a title with `labs`.
+
+# Plot it with color, a different scale on the y axis, and a title
+```{r}
+ggplot(month, aes(x=month, y=sum_revenue)) + 
+  geom_col(aes(fill=month)) + 
+  scale_y_continuous(breaks=seq(0,700000,100000)) + 
+  labs(title='Sum of Revenue by Month')
+```
+
+This is a nice graph and helpful way to see what is going on. However, suppose we worry that this visualization is misleading because there is a chance that revenue behaves differently by year. To check this, we want to examine total revenue by month and also by year. Luckily, it is easy to do this with `group_by`. Again, first think about how we want the data to look after we transform it. We want the data to be in three columns—`year`, `month`, and `sum_revenue`. How many rows do we want? The answer is 12*3, so 36, since we have 12 months for each of the three years. The process is exactly like before. In fact, the only change is that we will add an additional column, year, to the `group_by()` function. As we run this code and look at the new table we notice we have 36 rows as expected and the correct number of columns. What do we learn? 
+
+# Group_by year and month
+```{r}
+year_month <- df1 %>% group_by(year, month) %>% summarize(sum_revenue=sum(revenue))
+print(year_month)
+```
+
+Well, it is definitely hard to compare the years and months with the data just in this dataframe. Let’s visualize it with a new plot that we have not seen before, a line plot. In this plot, we want to graph each of the totals by month. So, `month` should be on the x axis and sum of revenue should be on the y axis. What we would like is for each year to have a separate line. To do this we need to pass the aesthetic `group=year` to the `geom_line()` plot.
+
+
+
+# Line plot of sum of revenue by month, grouped by year
+```{r}
+ggplot(year_month, aes(x=month, y=sum_revenue)) + geom_line(aes(group=year))
+```
+
+This is great start but it is really hard to see which year is which in this plot. We can use a few tweaks to make this plot much better. First, let’s change the color of each year. We do this by adding color to the aesthetics of the `ggplot` function. Also, to make this look better, let’s make year a `factor` instead of a number. That looks really good. 
+
+# Line plot of sum of revenue by month, grouped by year, colored by year
+```{r}
+ggplot(year_month, aes(x=month, y=sum_revenue, color=factor(year))) + 
+  geom_line(aes(group=factor(year)))
+```
+
+Let’s do one more thing before we interpret this. Let’s add the actual points themselves to the lines. We do this by adding a second plot, the point plot. Let’s run this and see how it looks.
+
+Now this is really clear. We can see that we were right earlier when we thought that 2017 really underperformed the other two years. Total revenue is lowest in each month for 2017 except for once in April. Next, we see that the general pattern of lower revenue in winter and spring and higher sales in summer and fall holds across all years. Please note how much easier it is to see all of this using a plot versus just looking at the data. 
+
+# Line plot of sum of revenue by month, grouped by year, colored by year, with points added
+```{r}
+ggplot(year_month, aes(x=month, y=sum_revenue, color=factor(year))) + 
+  geom_line(aes(group=factor(year))) +
+  geom_point()
+```
