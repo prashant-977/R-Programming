@@ -1,0 +1,131 @@
+# Title: EDA #4
+
+Course: MBA563
+Term: Summer 2021
+Mooc or HE?: Mooc
+Module: 03
+Video: 13
+Author: Jessen Hobson
+************************************************************************
+
+In this video we will learn some techniques for viewing, understanding, and exploring data. As always, we encourage you to follow along. Do each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool. 
+
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open.
+
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+Next, let’s load our data. The data we are using is based on the TECA convenience store data. This data is a sample of transactions from several different convenience stores in the U.S. from 2017-2019. Let’s open a new data set provided for you called `parent_dashboard.rds`. Let’s call this table `products`.
+
+# Bring in needed libraries and read in data
+```{r}
+library(tidyverse)
+products <- read_rds('parent_dashboard.rds')
+```
+
+In this video we will look at a more detailed and realistic dataset for evaluating the performance of different categories of products from the stores in the TECA dataset. A key task a brand manager and marketing executive would do on a frequent basis is to examine how products and product categories are performing. For example, an executive might check how the gross profit margin of cold dispensed beverages, like fountain soda, are performing this month compared to last month. She might do this by examining how the gross profit in fountain soda has changed this month versus last month. Has the gross profit gone up of down, for example? 
+
+To practice looking at questions like these, we created a new data set , taken from the one we have been using. Let’s use the `str()` function and the `summary()` to look at this table. To make this dataframe, we grouped and summarized by `parent_name`, `year`, and `month`, so that each row represents one product category for one month of one year. 
+* Next, we counted the transactions to create the column `num_trans`. 
+* Next, we summed the revenue for that product in that year and month to create the column `tot_revenue`
+* We next summed costs and gross profit to create the column `tot_costs`, `tot_gross_profit`
+* We then used these totals to calculate `tot_gp_margin`
+* Next, we create `share_num_trans`, `share_revenue`, and `share_grossprofit`. These columns are the percentage of that month’s transactions, revenue and gross profit derived by that product category. 
+
+# Look at the data
+```{r}
+str(products)
+summary(products)
+```
+
+For example, using the `filter()` function we can see that in August of 2019, the number of transactions of Cold Dispensed Beverages made up about 8% of all of the transactions that month. Similarly, Cold Dispensed Beverages for that month made up about 1% of the revenue and 3% of the gross profit. 
+
+The last six columns represent changes for that product in the current month relative to the same month last year. That is, the `chng` columns represent the difference for this product category this month versus the same month last year while the `percent_chng` columns are that difference divided by the prior year’s month---thus, the percentage change from the same month last year. 
+Since 2017 is the first year of data we have, we only have these values for 2018 and 2019. These are `chng_revenue`, `percent_chng_revenue`, `chng_grossprofit`, `percent_chng_grossprofit`, `chng_gp_margin`, `percent_chng_gp_margin`  
+
+# View August 2019
+```{r}
+products %>% filter(year==2019, month=='Aug', parent_name=='Cold Dispensed Beverage')
+```
+
+Let’s say we are most interested in candy sales (because, hey, who doesn’t like candy). This is an important product because, while total sales are relatively low for this product—about 1% of all sales—it has a decent margin—about 50%-- and is a key product for promotions and impulse purchases. Let’s look at how candy performed in 2018 and 2019. First, create a dataframe of just candy—‘Candy/Gum’ as it is called here. We will again do this with the really nice dplyr (dee ply arr) function, `filter()`. With filter, we can create a new dataframe and only keep rows that meet a certain condition. In this case, we want rows that have parent name ‘Candy/Gum’ and the years 2018 and 2019. Notice, that it easier to select “not 2017” with the `!=`, rather then to select both 2018 and 2019.
+
+# Revenue for 2018 and 2019 for Candy/Gum
+```{r}
+candy1 <- products %>% filter(parent_name=='Candy/Gum', year!=2017)
+```
+
+Let’s examine how candy performed in 2019 versus 2018. We can use a line plot, with color as `year` and grouped by `year` to see total revenue for this product category by month. Let’s use ggplot. We have three layers for this plot. The ggplot layer has total revenue on the y axis and month on the x axis, and year as the color. The second layer uses the line plot and puts year as the group in the aesthetics. The final layer is a title. 
+
+A couple things are evident here. First, it is easy to see the familiar seasonal pattern of sales for this industry. Sales bottom out in the beginning of the year, but they heat up again in the Summer and Fall. Next, we can see that candy made more revenue in 2019 versus 2018, in almost every month. 
+
+
+# Candy revenue by year
+```{r}
+ggplot(candy1, aes(x=month, y=tot_revenue, color=year)) + 
+  geom_line(aes(group=year)) + 
+  labs(title='Candy: revenue by year')
+```
+
+However, it would also be interesting to see why this was. Was it because we sold more products in 2019? If we plot the number of transactions, we can see that we sold about the same number of products right up until about September. So, how could total revenue stay so high in 2019 if transactions were so much lower than in 2018? 
+
+# Number of transaction for Candy/Gum by month and year
+```{r}
+ggplot(candy1, aes(x=month, y=num_trans, color=year)) + 
+  geom_line(aes(group=year)) + 
+  labs(title='Candy: transactions')
+```
+
+If we look at one more plot, gross profit margin, we can see that gross profit margin really increased at the end of 2019. Thus, TECA must have raised prices for candy at the end of the year, which decreased the number of sales transactions for candy but still kept revenue somewhat high. This could be a dangerous strategy, and we will need to check up on this category in early 2020 to see if it keeps being successful. Of course, we are just guessing that this is what happened, and we would need to investigate the data more to find out for sure. 
+
+# Gross profit margin for Candy/Gum by month and year
+```{r}
+ggplot(candy1, aes(x=month, y=tot_gp_margin, color=year)) + 
+  geom_line(aes(group=year)) + 
+  labs(title='Candy: gross profit margin')
+```
+
+Finally, as a product manager or marketing executive, we would be looking at the current month and would want to see and evaluate performance in the current month quickly and easily. Thus, let’s look at only 2019, but look at the columns that show changes from the prior year. This can help us compare the current results in a product category to the prior year even more quickly. Let’s use filter again to create a dataframe with only 2019.
+
+Let’s examine the percentage change in revenue using a bar/column plot. We use the `geom_plot` in the second layer and add `month` as the `fill` in the aesthetics so that we can more easily see the distinction between each month. 
+
+Using this plot, we can more clearly see the problem we are having at the end of the year. By December, revenue for candy and gum is nearly 5% less than in was in 2018! 
+
+# Revenue percentage changes for 2019 for Candy/Gum
+```{r}
+candy2 <- products %>% filter(parent_name=='Candy/Gum', year==2019)
+ggplot(candy2, aes(x=month, y=percent_chng_revenue)) + 
+  geom_col(aes(fill=month))
+```
+
+Let’s explore this some more by looking at the percentage change in gross profit margins using another column plot. Notice how easy it is to change variable we are examining from revenue to gross profit margin and the plot a new graph. We just cut and paste and change one word! 
+
+This does a good job of highlighting what is going on. With gross margin down more than 4% in the first 8 months, it appears that a change was needed. Thus, a good guess is that prices were raised for candy in September. This helped gross profit margin increase but hurt overall revenue as fewer products were sold. 
+
+# Gross profit margin percentage changes for 2019 for Candy/Gum
+```{r}
+ggplot(candy2, aes(x=month, y=percent_chng_gp_margin)) + 
+  geom_col(aes(fill=month))
+```
+
+Finally, let’s look at fuel sales by month and year and see how the share of revenue and gross profit change. We will again use a line plot to look at revenue each month by year. 
+
+Looking at the share of revenue, we see that gas contributes around 65% of all revenue. Further, if we look at the share of revenue that is tied up in fuel we can see that this percentage is highest for 2018. This higher share of revenue for 2018 is not necessarily a good thing. Recall that gas has a low gross profit margin—around 0.12%. Thus, total revenue might be higher for 2018 relative to 2019, but gross profit margin is probably smaller in 2018. Additional, unshown analysis confirms this. This means that in 2018, less of the revenue brought into the stores is able to contribute to overhead and other indirect costs. In other words, the revenue in 2018 is less healthy than that in 2019.
+
+# Examing fuel's share of total revenue
+```{r}
+fuel <- products %>% filter(parent_name=='Fuel')
+ggplot(fuel, aes(x=month, y=share_revenue, color=factor(year))) + 
+  geom_line(aes(group=year)) + 
+  coord_cartesian(ylim=c(0, 1))
+```
+
+Sure enough, if we run another line plot looking at share of gross profit, we see that in 2019, fuel made up the lowest share of 2019’s gross profit in three years. 
+
+If this is because TECA has replaced fuel purchases with something with a higher `gp_margin`, then this is good and we can say that 2019 is probably a healthier year than 2018.
+
+# Examining fuel's share of gross profit
+```{r}
+ggplot(fuel, aes(x=month, y=share_grossprofit, color=factor(year))) + 
+  geom_line(aes(group=year)) + 
+  coord_cartesian(ylim=c(0, 1))
+```
