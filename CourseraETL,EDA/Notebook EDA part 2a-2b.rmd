@@ -1,0 +1,91 @@
+# Title: EDA #2
+
+Course: MBA563  
+Term: Summer 2021  
+Mooc or HE?: Mooc  
+Module: 03  
+Video: 11  
+Author: Jessen Hobson  
+************************************************************************
+
+In this video we will learn some techniques for viewing, understanding, and exploring data. As always, we encourage you to resist the urge to just watch these videos. Rather, please follow along, doing each of the steps we are doing, so that you can get the critical hands-on experience necessary to learn this valuable tool. 
+
+There are two files that we have created for you for this video—the .rmd file with the code and the instructions and the .rds file, which has the data we will use in this lesson. First, open the .rmd file. I already have it open.
+
+Next, let’s load the packages we are going to need. We are going load the package Tidyverse. To load a package, we need to call the function `library()`. We then put the package into the parentheses of the function. If you have never downloaded tidyverse you will need to do that first. 
+
+Next, let’s load our data. The data we are using is based on the TECA convenience store data. This data is a sample of transactions from several different convenience stores in the U.S. from 2017-2019. We will load the `mooc1_eda.rds` data and call it ‘df1’.
+
+# Bring in needed libraries and read in data
+```{r}
+library(tidyverse)
+df1 <- read_rds('mooc1_eda.rds')
+```
+
+One way to explore this data is to examine how two continuous variables move together. While our first interest is revenue, we might also be interested in how revenue and gross profit margin move together. 
+
+First, let’s discuss what gross profit is. Gross profit is simply the revenue you make from selling an item minus the direct costs—the costs to sell that item. So, for example, if you are selling a gallon of gas, the revenue you get from that gas might be around 3 dollars. However, it probably costs about 2.70 for all of the costs you had to spend to sell that gallon, such as purchasing and shipping the gas. Thus, you only have about 0.30 cents gross profit on the sale of that gallon--3 - 2.70. This is important to know because that 0.30 cents is what you have left over to pay for the rest of your business—employee salary, rent, utilities, etc. Thus, we obviously want to sell higher margin products—products that have less direct costs and a larger gross profit. Another way to examine gross profit is to look at the gross profit margin. This is just the gross profit divided by revenue. Thus, it is a measure of how money the company gets to use in the business for each dollar of revenue from the sale of that product.
+
+So, let’s look at how revenue and gross profit margin move together. Before we do that, what do we expect to happen? What products do we expect to have higher margins and which to we expect to have lower margins? The thing a convenience store sells the most is gas. Gas is a very low margin product, yet a gas purchase is one of the highest revenue items for a convenience store. On the other hand, some cheaper items like fountain soda have high margins. Thus, the higher margins will probably be for the lower revenue products. 
+
+Let's build a ggplot plot. The first layer is the `ggplot()` function. The function contains the dataframe as an argument and then the aesthetics. The aesthetics include the variable on the x axis, which in this case is revenue, and the variable on the y axis, which is gross profit margin. The next layer is the plot, which in this case is called `geom_point()`. I have added a third and fourth layer as well. The third layer adjusts the coordinates – essentially zooming in. The fourth layer adds a title. Notice that R gives a warning here. This just indicates that we have about 18,863 NAs for `gp_margin`.
+
+Do we find what we expect with this plot? Yes, as we predicted, we see a wide variance of gross profit margin for low revenue products, but for the higher revenue products, which are probably almost all fuel, we see low margins.
+
+# Scatter plot of revenue and gross profit margin - continuous variable compared to continuous variable
+```{r}
+ggplot(df1, aes(x=revenue, y=gp_margin)) + 
+  geom_point() + 
+  coord_cartesian(xlim=c(0, 30), ylim=c(-1,1)) + 
+  labs(title='Scatter Plot of revenue & gross profit margin')
+```
+
+Next, we want to look at the sum of revenue over time. Specifically, let’s look at the sum of revenue for each year. What do we expect to see in this plot? Well, since we are new to this data, we don’t really know which year will have the highest sum or revenue. Let’s do this using two different, common, plots. First, we will look at the total sales revenue for 2017-2019 using a bar plot. Note here that we are looking at a continuous variable, `revenue`, by levels of a categorical/discrete variable, `year`. Now normally we might consider time to be a continuous variable since it’s each interval has meaning. However, we want to look at revenue in three buckets or categories, so we are going to be thinking of year as a categorical variable. Thus, in the aesthetics, we need to tell ggplot to consider year as a factor. Thus, the first layer includes the dsplyr function `factor(year)`. 
+
+The plot function for a bar plot is `geom_col()`. I also added a third layer to add a title. What do we see? It looks like across all of our stores, 2017 had the least revenue and 2018 had the best.  This is interesting, but of course, we really don’t know why this was. Also, it is not clear but just looking at the picture, whether these differences are significant. To know what we would need to use statistics, not just exploratory data analysis. 
+
+# Bar/Column plot of the sum revenue by year - continuous variable and discrete variable
+```{r}
+ggplot(df1, aes(x=factor(year), y=revenue)) + 
+  geom_col() + 
+  labs(title = 'Bar Plot-revenue by year')
+```
+
+One reason total revenue might be lower in 2017 is that the products sold is 2017 had lower revenue on average than in 2018 and 2019. We can see if this is the case by examining mean and median revenue per transaction using a box plot. A box plot is a common plot used to look at the median and variance of a continuous variable across different categories of discrete variable. Let’s look at this graph. Note, that I have changed the scale so we can see the box part much better. Box plots are a handy way to look at five summary numbers—maximum, minimum, median, first quartile, and the third quartile. This box of the box plot has its top at the third quartile and its bottom at the first quartile and the median inside the box. 
+
+In our graph, we can see that 2017 does indeed have lower median revenue per product because that line is lowest in 2017. The median shows the middle of the data. The bottom of the box shows the middle of the lower half, which is the first quartile, and the top of the box shows the middle of the upper half of the data, which is the third quartile. The maximum and minimum are not shown here because I zoomed in on the display. You could delete the `coord_cartesian()` function layer to see this. 
+
+So, what else do we learn with this graph? We can see that the distribution of revenue per transaction is skewed to the right. That is, we have more revenue that is high and positive then low and positive or negative. This makes sense since revenue is almost always positive, and we know that most of our revenue is small, but there are many big fuel purchases. We also have a lot of outliers. That is, we have a lot of data outside of the box. That is not too surprising. Most of the purchases in a gas station are going to be small, but a big truck might come and buy 300 gallons of gasoline. Based upon the plot, 2019 was the best year, but with slim margin. The median revenue per product sold is just barely highest in 2019. Then why did 2019 have lower total revenue than 2018? It must have been because 2019 sold fewer products. Sure enough, some quick research shows that 890,503 products were sold in 2017, 834,314 in 2018, and 802,067 in 2019. 
+
+*At this point, it is probably important to understand why our convenience stores might ever record negative revenue. The stores are obviously not selling products for a negative price. Rather, our stores record certain transactions, when they pay out money, as reductions in revenue. For example, when they pay out a lottery winning, it is usually recorded as a reduction in revenue with no effect on gross profit.
+
+# Box Chart for mean and median revenue by year - continuous variable and discrete variable
+```{r}
+ggplot(df1, aes(x=factor(year), y=revenue)) + 
+  geom_boxplot() +
+  coord_cartesian(ylim=c(-10, 10)) + 
+  labs(title = 'Box Plot-revenue by year')
+```
+  
+# Box Chart for median revenue by year with no limit on the coordinates
+```{r}
+ggplot(df1, aes(x=factor(year), y=revenue)) + 
+  geom_boxplot() +
+  labs(title = 'Box Plot-revenue by year')
+```
+  
+Let’s visualize average revenue per transaction by year in one more plot. This time let’s use a violin plot. This is the same data, but just visualized in a different way. The violin plot is very similar to the box plot, but allows us to see, by the shape of the open area, the distribution of the data. Note, here that I added a new layer we have not seen before (so many layers in ggplot), the `stat_summary` function. This allows me to insert the median as a red point and the mean as a diamond shape. 
+
+What do we learn from this graph? Do we learn anything we did not know from the box plots? Well, we do actually learn something from the differences in the shape of the violin plots. If we compare 2018 to 2019, we can see that 2018 is more pear-shaped than the diamond-shaped 2019. This means that in general, 2018 sold more lower revenue products but a few high revenue products while 2019 sold more even-priced products, more closely grouped around the median. Thus, the median revenue numbers for 2019 may be more sustainable than those of 2018. 
+
+Finally, this last plot, the violin plot did seem to get a little complicated. You might wonder how you could remember all of these different layers. However, please remember that because R is open source, a lot of people post their ideas and other help on the web. Thus, a simple search on “ggplot violin plot” would yield plots like this one and would also give you help on how to create your own.
+
+# Violin Plot for the mean and median revenue by year - continuous variable and discrete variable
+```{r}
+ggplot(df1, aes(x=factor(year), y=revenue)) + 
+  geom_violin() + 
+  labs(title = 'Violin Plot-revenue by year') + 
+  coord_cartesian(ylim=c(-10,10)) +
+  stat_summary(fun=median, geom='point', size=2, color='red') + 
+  stat_summary(fun=mean, geom="point", shape=23, size=2)
+```
