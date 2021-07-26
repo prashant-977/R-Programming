@@ -1,0 +1,120 @@
+---
+title: "PeerGradedExercise"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library('tidyverse')
+#library('ggplot2')
+```
+
+```{r}
+library('lubridate')
+
+```
+## Read File
+
+```{r}
+pga <-read.csv('C:\\Users\\tranq\\Desktop\\Data and Files Used in Videos\\prd.csv')
+```
+
+## Examine Data and Data Formats
+```{r}
+str(pga)
+summary(pga)
+head(pga,n=10)
+#tail(pga,n=10)
+```
+
+##Q. 1
+### The Date is of type chr, we need to convert it to Date, Category to Factor, Department as Factor.
+
+```{r}
+pga$Date <- as.Date(pga$Date, format =  "%m/%d/%Y")
+pga$Department <- as.factor(pga$Department)
+pga$Category <- as.factor(pga$Category)
+```
+
+## Examine Data Formats now
+```{r}
+str(pga)
+summary(pga)
+#head(pga,n=10)
+tail(pga,n=10)
+```
+
+#Q.2
+
+### Check the summary of Quantity and Price columns
+
+```{r}
+summary(pga$Quantity)
+summary(pga$Price)
+```
+#Displaying the NA values
+```{r}
+sum(is.na(pga$Quantity))
+sum(is.na(pga$Price))
+```
+#Interpretation of the summaries
+
+Both Quantity and Price have NA values. The data seems to be bidirectionally skewed, based on how the quartiles are distributed. Also, the mean and median are quite close. 
+
+
+# Q. 4 Bar Chart for Category Column
+```{r}
+counts <- table(pga$Category)
+barplot(counts, main="Bar Chart for Category Column",
+   xlab="Distribution of Categories")
+
+```
+We can see that Chicken is the highest consumed. Beef and Yogurt have almost equal consumption. 
+
+# Q. 5 Creating Column Revenue 
+```{r}
+pga$Revenue = pga$Price * pga$Quantity
+str(pga)
+```
+
+```{r}
+summary(pga$Department)
+```
+# Displaying the stacked bar chart of Department with their Revenues
+```{r}
+ggplot(pga, aes(x=Department, y=Revenue)) + 
+  geom_col() +
+  labs(title='Department vs Revenue Plot.')
+```
+
+
+```{r}
+hist(pga$Price,xlab = "Price", main='Histogram of Price')
+hist(pga$Revenue,xlab = "Revenue", main = 'Histogram of Revenue')
+```
+```{r}
+boxplot(pga$Price,main='Box Plot for Price')
+boxplot(pga$Revenue,main='Box Plot for Revenue')
+
+```
+
+
+
+#Essay
+
+PowerBI is very easy to use if we want to do, say the bar chart with grouping. It is a bit lengthy process in R studio, loading different built-in libraries first. Although R has a lot of built-in libraries, it is difficult to follow up the documentation. On the other hand, using the libraries in Alteryx, and PowerBI is easier. 
+
+In Alteryx and PowerBI, dashboarding and documentation is easier. Grouping by dates can be handled in excellent way in PowerBI. Alteryx also has a lot of libraries and good examples and documentation available. 
+
+Regarding the documentation process, in R, we have to write a lot of process by ourselves. In PowerBI, it is easier to dashboard the EDA processes. Also, in Alteryx, it is easy to dashboard the whole process and discuss our results and findings to our teammates. 
+
+I find it interesting to do the ETL process in R itself, it gives me the esteem of a programmer. 
